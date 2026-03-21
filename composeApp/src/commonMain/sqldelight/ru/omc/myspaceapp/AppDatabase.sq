@@ -1,0 +1,25 @@
+CREATE TABLE favorite (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    added_date TEXT NOT NULL
+);
+
+CREATE INDEX idx_type ON favorite (type);
+
+selectAllFavorites:
+SELECT * FROM favorite ORDER BY added_date DESC;
+
+selectFavoritesByType:
+SELECT * FROM favorite WHERE type = ? ORDER BY added_date DESC;
+
+insertFavorite:
+INSERT INTO favorite (id, type, name, description, added_date)
+VALUES (?, ?, ?, ?, ?);
+
+deleteFavorite:
+DELETE FROM favorite WHERE id = ? AND type = ?;
+
+isFavorite:
+SELECT COUNT(*) FROM favorite WHERE id = ? AND type = ?;
