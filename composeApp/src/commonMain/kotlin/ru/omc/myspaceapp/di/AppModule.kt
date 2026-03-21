@@ -5,6 +5,9 @@ import org.koin.dsl.module
 import ru.omc.myspaceapp.createDatabase
 import ru.omc.myspaceapp.data.api.SpaceApi
 import ru.omc.myspaceapp.data.repository.FavoritesRepository
+import ru.omc.myspaceapp.features.asteroids.*
+import ru.omc.myspaceapp.features.astronauts.*
+import ru.omc.myspaceapp.features.favorites.FavoritesViewModel
 
 val appModule = module {
     // Database
@@ -14,8 +17,10 @@ val appModule = module {
     // API
     single { SpaceApi() }
 
-    // ViewModels (добавим позже для каждой фичи)
-    // viewModel { AsteroidsViewModel(get(), get()) }
-    // viewModel { AstronautsViewModel(get(), get()) }
-    // viewModel { FavoritesViewModel(get()) }
+    // ViewModels
+    viewModel { AsteroidsViewModel(get(), get()) }
+    viewModel { AsteroidDetailsViewModel(get(), get()) }
+    viewModel { AstronautsViewModel(get(), get()) }
+    viewModel { AstronautDetailsViewModel(get(), get()) }
+    viewModel { FavoritesViewModel(get()) }
 }
