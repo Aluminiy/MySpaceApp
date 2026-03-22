@@ -101,8 +101,8 @@ fun AsteroidDetailsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Мин: ${asteroid.estimatedDiameter.kilometers.min.toInt()} м")
-                            Text("Макс: ${asteroid.estimatedDiameter.kilometers.max.toInt()} м")
+                            Text("Мин: ${(asteroid.estimatedDiameter.kilometers.min * 1000).toInt()} м")
+                            Text("Макс: ${(asteroid.estimatedDiameter.kilometers.max * 1000).toInt()} м")
                         }
                     }
 

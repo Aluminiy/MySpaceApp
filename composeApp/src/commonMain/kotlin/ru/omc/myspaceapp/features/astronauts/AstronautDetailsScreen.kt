@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
-import ru.omc.myspaceapp.data.model.AstronautDto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,7 +104,7 @@ fun AstronautDetailsScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text("Корабль/Станция", style = MaterialTheme.typography.labelMedium)
-                                Text(astronaut.spacecraft, style = MaterialTheme.typography.titleMedium)
+                                Text(astronaut.craft, style = MaterialTheme.typography.titleMedium)
                             }
                         }
                     }
@@ -117,7 +116,7 @@ fun AstronautDetailsScreen(
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Всего астронавтов на орбите: ${state.allAstronauts.size}")
-                            Text("Миссия: ${astronaut.spacecraft}")
+                            Text("Миссия: ${astronaut.craft}")
                         }
                     }
 

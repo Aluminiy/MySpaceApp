@@ -100,7 +100,7 @@ private fun AstronautCard(
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
                 Text(
-                    text = astronaut.spacecraft,
+                    text = astronaut.craft,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

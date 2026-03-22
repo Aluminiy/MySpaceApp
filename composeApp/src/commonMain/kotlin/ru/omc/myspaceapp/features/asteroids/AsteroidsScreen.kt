@@ -117,8 +117,8 @@ private fun AsteroidCard(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Размер: ${asteroid.estimatedDiameter.kilometers.min.toInt()} - " +
-                        "${asteroid.estimatedDiameter.kilometers.max.toInt()} м",
+                text = "Размер: ${(asteroid.estimatedDiameter.kilometers.min * 1000).toInt()} - " +
+                        "${(asteroid.estimatedDiameter.kilometers.max * 1000).toInt()} м",
                 style = MaterialTheme.typography.bodyMedium
             )
         }

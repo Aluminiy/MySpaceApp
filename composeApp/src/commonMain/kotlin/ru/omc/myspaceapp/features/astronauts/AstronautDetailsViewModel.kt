@@ -12,8 +12,6 @@ import ru.omc.myspaceapp.data.model.AstronautDto
 import ru.omc.myspaceapp.data.repository.FavoritesRepository
 import kotlin.time.Clock as StdClock
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant as KtxInstant
 
 data class AstronautDetailsState(
@@ -89,7 +87,7 @@ class AstronautDetailsViewModel(
                     id = astronautName,
                     type = "astronaut",
                     name = current.name,
-                    description = "Корабль: ${current.spacecraft}",
+                    description = "Корабль: ${current.craft}",
                     addedDate = currentTime
                 )
             }
