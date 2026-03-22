@@ -10,6 +10,11 @@ import kotlinx.datetime.*
 import ru.omc.myspaceapp.data.api.SpaceApi
 import ru.omc.myspaceapp.data.model.AstronautDto
 import ru.omc.myspaceapp.data.repository.FavoritesRepository
+import kotlin.time.Clock as StdClock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant as KtxInstant
 
 data class AstronautDetailsState(
     val isLoading: Boolean = true,
@@ -77,15 +82,15 @@ class AstronautDetailsViewModel(
             if (currentlyFavorite) {
                 favoritesRepo.deleteFavorite(astronautName, "astronaut")
             } else {
-                val now = Clock.System.now()
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .toString()
+                val now = StdClock.System.now()
+                val ktxInstant = KtxInstant.fromEpochMilliseconds(now.toEpochMilliseconds())
+                val currentTime = ktxInstant.toLocalDateTime(TimeZone.currentSystemDefault()).toString()
                 favoritesRepo.insertFavorite(
                     id = astronautName,
                     type = "astronaut",
                     name = current.name,
                     description = "Корабль: ${current.spacecraft}",
-                    addedDate = now
+                    addedDate = currentTime
                 )
             }
             _state.value = _state.value.copy(isFavorite = !currentlyFavorite)

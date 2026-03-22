@@ -10,6 +10,11 @@ import kotlinx.datetime.*
 import ru.omc.myspaceapp.data.api.SpaceApi
 import ru.omc.myspaceapp.data.model.AsteroidDto
 import ru.omc.myspaceapp.data.repository.FavoritesRepository
+import kotlin.time.Clock as StdClock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant as KtxInstant
 
 data class AsteroidDetailsState(
     val isLoading: Boolean = true,
@@ -42,9 +47,9 @@ class AsteroidDetailsViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val today = Clock.System.now()
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .date
+                val now = StdClock.System.now()
+                val ktxInstant = KtxInstant.fromEpochMilliseconds(now.toEpochMilliseconds())
+                val today: LocalDate = ktxInstant.toLocalDateTime(TimeZone.currentSystemDefault()).date
                 val startDate = today.minus(7, DateTimeUnit.DAY)
 
                 val response = spaceApi.getNearEarthObjects(
@@ -86,15 +91,15 @@ class AsteroidDetailsViewModel(
             if (currentlyFavorite) {
                 favoritesRepo.deleteFavorite(asteroidId, "asteroid")
             } else {
-                val now = Clock.System.now()
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .toString()
+                val now = StdClock.System.now()
+                val ktxInstant = KtxInstant.fromEpochMilliseconds(now.toEpochMilliseconds())
+                val currentTime = ktxInstant.toLocalDateTime(TimeZone.currentSystemDefault()).toString()
                 favoritesRepo.insertFavorite(
                     id = asteroidId,
                     type = "asteroid",
                     name = current.name,
                     description = "Размер: ${current.estimatedDiameter.kilometers.min.toInt()} - ${current.estimatedDiameter.kilometers.max.toInt()} м",
-                    addedDate = now
+                    addedDate = currentTime
                 )
             }
             _state.value = _state.value.copy(isFavorite = !currentlyFavorite)

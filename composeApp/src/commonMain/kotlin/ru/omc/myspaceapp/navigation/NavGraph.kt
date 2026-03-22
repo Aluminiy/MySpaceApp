@@ -20,7 +20,7 @@ import ru.omc.myspaceapp.features.favorites.FavoritesScreen
 @Composable
 fun NavGraph(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry.value?.destination?.route
+    val currentRoute = navBackStackEntry?.destination?.route
 
     val showBottomBar = currentRoute in listOf(
         Screen.Asteroids.route,

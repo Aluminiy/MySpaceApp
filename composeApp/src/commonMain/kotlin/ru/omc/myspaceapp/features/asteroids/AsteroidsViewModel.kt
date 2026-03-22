@@ -10,6 +10,11 @@ import kotlinx.datetime.*
 import ru.omc.myspaceapp.data.api.SpaceApi
 import ru.omc.myspaceapp.data.model.AsteroidDto
 import ru.omc.myspaceapp.data.repository.FavoritesRepository
+import kotlin.time.Clock as StdClock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant as KtxInstant
 
 // === State ===
 data class AsteroidsState(
@@ -25,8 +30,7 @@ sealed interface AsteroidsIntent {
 
 // === ViewModel ===
 class AsteroidsViewModel(
-    private val spaceApi: SpaceApi,
-    private val favoritesRepo: FavoritesRepository
+    private val spaceApi: SpaceApi
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AsteroidsState())
@@ -43,9 +47,9 @@ class AsteroidsViewModel(
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 // ✅ Даты через kotlinx-datetime
-                val today = Clock.System.now()
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .date
+                val now = StdClock.System.now()
+                val ktxInstant = KtxInstant.fromEpochMilliseconds(now.toEpochMilliseconds())
+                val today: LocalDate = ktxInstant.toLocalDateTime(TimeZone.currentSystemDefault()).date
                 val startDate = today.minus(7, DateTimeUnit.DAY)
 
                 println("🚀 NEO Request: start=$startDate, end=$today")

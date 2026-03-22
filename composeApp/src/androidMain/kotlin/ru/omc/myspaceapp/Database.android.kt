@@ -12,11 +12,17 @@ fun initAndroidContext(context: Context) {
     androidContext = context
 }
 
+private val databaseLock = Any()
+private var _database: AppDatabase? = null
+
 actual fun createDatabase(): AppDatabase {
-    val driver: SqlDriver = AndroidSqliteDriver(
-        AppDatabase.Schema,
-        androidContext,
-        "AppDatabase.db"
-    )
-    return AppDatabase(driver)
+    return _database ?: synchronized(databaseLock) {
+        _database ?: AppDatabase(
+            AndroidSqliteDriver(
+                AppDatabase.Schema,
+                androidContext,
+                "AppDatabase.db"
+            )
+        ).also { _database = it }
+    }
 }

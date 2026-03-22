@@ -36,7 +36,7 @@ fun BottomNavigationBar(navController: NavController) {
                 selected = currentRoute == item.screen.route,
                 onClick = {
                     navController.navigate(item.screen.route) {
-                        popUpTo(navController.graph.startDestinationId) {
+                        popUpTo(Screen.Asteroids.route) {
                             saveState = true
                         }
                         launchSingleTop = true
