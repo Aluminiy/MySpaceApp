@@ -20,17 +20,20 @@ import kotlinx.datetime.Instant as KtxInstant
 data class AsteroidsState(
     val isLoading: Boolean = false,
     val asteroids: List<AsteroidDto> = emptyList(),
+    val favoriteIds: Set<String> = emptySet(),
     val error: String? = null
 )
 
 // === Intent ===
 sealed interface AsteroidsIntent {
     object Load : AsteroidsIntent
+    data class ToggleFavorite(val asteroidId: String) : AsteroidsIntent
 }
 
 // === ViewModel ===
 class AsteroidsViewModel(
-    private val spaceApi: SpaceApi
+    private val spaceApi: SpaceApi,
+    private val favoritesRepo: FavoritesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AsteroidsState())
@@ -39,6 +42,7 @@ class AsteroidsViewModel(
     fun processIntent(intent: AsteroidsIntent) {
         when (intent) {
             is AsteroidsIntent.Load -> loadAsteroids()
+            is AsteroidsIntent.ToggleFavorite -> toggleFavorite(intent.asteroidId)
         }
     }
 
@@ -62,9 +66,16 @@ class AsteroidsViewModel(
                 val allAsteroids = response.nearEarthObjects.values.flatten()
                 println("✅ Found ${allAsteroids.size} asteroids")
 
+                // ✅ Загружаем статус избранного для всех астероидов
+                val favoriteIds = allAsteroids
+                    .filter { favoritesRepo.isFavorite(it.id, "asteroid") }
+                    .map { it.id }
+                    .toSet()
+
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    asteroids = allAsteroids
+                    asteroids = allAsteroids,
+                    favoriteIds = favoriteIds
                 )
             } catch (e: Exception) {
                 println("❌ ERROR: ${e::class.simpleName} - ${e.message}")
@@ -73,6 +84,38 @@ class AsteroidsViewModel(
                 _state.value = _state.value.copy(
                     isLoading = false,
                     error = e.message ?: "Unknown error"
+                )
+            }
+        }
+    }
+
+    private fun toggleFavorite(asteroidId: String) {
+        viewModelScope.launch {
+            val asteroid = _state.value.asteroids.find { it.id == asteroidId } ?: return@launch
+            val isCurrentlyFavorite = _state.value.favoriteIds.contains(asteroidId)
+
+            if (isCurrentlyFavorite) {
+                favoritesRepo.deleteFavorite(asteroidId, "asteroid")
+                println("❌ Removed from favorites: $asteroidId")
+
+                _state.value = _state.value.copy(
+                    favoriteIds = _state.value.favoriteIds - asteroidId
+                )
+            } else {
+                val now = StdClock.System.now()
+                val ktxInstant = KtxInstant.fromEpochMilliseconds(now.toEpochMilliseconds())
+                val currentTime = ktxInstant.toLocalDateTime(TimeZone.currentSystemDefault()).toString()
+                favoritesRepo.insertFavorite(
+                    id = asteroidId,
+                    type = "asteroid",
+                    name = asteroid.name,
+                    description = "Размер: ${asteroid.estimatedDiameter.kilometers.min.toInt()} - ${asteroid.estimatedDiameter.kilometers.max.toInt()} м",
+                    addedDate = currentTime
+                )
+                println("⭐ Added to favorites: $asteroidId")
+
+                _state.value = _state.value.copy(
+                    favoriteIds = _state.value.favoriteIds + asteroidId
                 )
             }
         }

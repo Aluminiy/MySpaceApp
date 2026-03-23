@@ -4,10 +4,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
@@ -72,6 +76,10 @@ fun AsteroidsScreen(
                     items(state.asteroids) { asteroid ->
                         AsteroidCard(
                             asteroid = asteroid,
+                            isFavorite = state.favoriteIds.contains(asteroid.id),
+                            onToggleFavorite = { id ->
+                                viewModel.processIntent(AsteroidsIntent.ToggleFavorite(id))
+                            },
                             onClick = { onNavigateToDetails(asteroid.id) }
                         )
                     }
@@ -84,6 +92,8 @@ fun AsteroidsScreen(
 @Composable
 private fun AsteroidCard(
     asteroid: AsteroidDto,
+    isFavorite: Boolean,
+    onToggleFavorite: (String) -> Unit,
     onClick: () -> Unit
 ) {
     Card(
@@ -97,30 +107,57 @@ private fun AsteroidCard(
                 MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = asteroid.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    fontWeight = FontWeight.Bold
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 if (asteroid.isPotentiallyHazardous) {
-                    Text(
-                        text = "⚠️ ОПАСНЫЙ",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelSmall
+                    AssistChip(
+                        onClick = {},
+                        label = { Text("⚠️ Опасный") },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                        )
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
+
+                val minMeters = (asteroid.estimatedDiameter.kilometers.min * 1000).toInt()
+                val maxMeters = (asteroid.estimatedDiameter.kilometers.max * 1000).toInt()
+
+                Text(
+                    text = if (minMeters == 0 && maxMeters == 0) {
+                        "Размер: неизвестен"
+                    } else {
+                        "Размер: $minMeters - $maxMeters м"
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Размер: ${(asteroid.estimatedDiameter.kilometers.min * 1000).toInt()} - " +
-                        "${(asteroid.estimatedDiameter.kilometers.max * 1000).toInt()} м",
-                style = MaterialTheme.typography.bodyMedium
-            )
+
+            IconButton(
+                onClick = { onToggleFavorite(asteroid.id) },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(40.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.Favorite,
+                    contentDescription = if (isFavorite) "Удалить из избранного" else "В избранное",
+                    tint = if (isFavorite) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

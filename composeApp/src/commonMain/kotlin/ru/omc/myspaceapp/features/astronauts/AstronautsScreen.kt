@@ -4,6 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -65,6 +68,10 @@ fun AstronautsScreen(
                     items(state.astronauts) { astronaut ->
                         AstronautCard(
                             astronaut = astronaut,
+                            isFavorite = state.favoriteNames.contains(astronaut.name),
+                            onToggleFavorite = { name ->
+                                viewModel.processIntent(AstronautsIntent.ToggleFavorite(name))
+                            },
                             onClick = { onNavigateToDetails(astronaut.name) }
                         )
                     }
@@ -77,6 +84,8 @@ fun AstronautsScreen(
 @Composable
 private fun AstronautCard(
     astronaut: AstronautDto,
+    isFavorite: Boolean,
+    onToggleFavorite: (String) -> Unit,
     onClick: () -> Unit
 ) {
     Card(
@@ -87,21 +96,43 @@ private fun AstronautCard(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-            Text("🚀 ", fontSize = 32.sp)
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = astronaut.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-                Text(
-                    text = astronaut.craft,
-                    style = MaterialTheme.typography.bodyMedium
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("🚀 ", fontSize = 32.sp)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = astronaut.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                    Text(
+                        text = astronaut.craft,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = {
+                    onToggleFavorite(astronaut.name)
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(40.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.Favorite,
+                    contentDescription = if (isFavorite) "Удалить из избранного" else "В избранное",
+                    tint = if (isFavorite) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

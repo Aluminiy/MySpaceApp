@@ -30,7 +30,7 @@ val appModule = module {
     }
 
     // ViewModels
-    viewModel { AsteroidsViewModel(get()) }
+    viewModel { AsteroidsViewModel(get(), get()) }
     viewModel { AsteroidDetailsViewModel(get(), get()) }
     viewModel { AstronautsViewModel(get(), get()) }
     viewModel { AstronautDetailsViewModel(get(), get()) }
