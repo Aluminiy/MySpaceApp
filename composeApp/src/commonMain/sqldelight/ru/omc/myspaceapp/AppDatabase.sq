@@ -23,3 +23,44 @@ DELETE FROM favorite WHERE id = ? AND type = ?;
 
 isFavorite:
 SELECT COUNT(*) FROM favorite WHERE id = ? AND type = ?;
+
+CREATE TABLE asteroids (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    is_potentially_hazardous INTEGER NOT NULL,
+    diameter_min REAL NOT NULL,
+    diameter_max REAL NOT NULL,
+    close_approach_date TEXT,
+    cached_at TEXT NOT NULL
+);
+
+-- Запросы для кэша
+getCachedAsteroids:
+SELECT * FROM asteroids ORDER BY cached_at DESC;
+
+insertCachedAsteroid:
+INSERT INTO asteroids (id, name, is_potentially_hazardous, diameter_min, diameter_max, close_approach_date, cached_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteCachedAsteroids:
+DELETE FROM asteroids;
+
+getCachedAsteroidsCount:
+SELECT COUNT(*) FROM asteroids;
+
+CREATE TABLE astronauts (
+    name TEXT NOT NULL PRIMARY KEY,
+    spacecraft TEXT NOT NULL,
+    cached_at TEXT NOT NULL
+);
+
+-- Запросы для кэша астронавтов
+getCachedAstronauts:
+SELECT * FROM astronauts ORDER BY cached_at DESC;
+
+insertCachedAstronaut:
+INSERT INTO astronauts (name, spacecraft, cached_at)
+VALUES (?, ?, ?);
+
+deleteCachedAstronauts:
+DELETE FROM astronauts;

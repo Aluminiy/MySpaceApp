@@ -14,26 +14,31 @@ import kotlin.time.Clock as StdClock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.DateTimeUnit
+import ru.omc.myspaceapp.data.repository.AsteroidsRepository
 import kotlinx.datetime.Instant as KtxInstant
 
 // === State ===
 data class AsteroidsState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val asteroids: List<AsteroidDto> = emptyList(),
     val favoriteIds: Set<String> = emptySet(),
-    val error: String? = null
+    val error: String? = null,
+    val isOffline: Boolean = false
 )
 
 // === Intent ===
 sealed interface AsteroidsIntent {
     object Load : AsteroidsIntent
+    object Refresh : AsteroidsIntent
     data class ToggleFavorite(val asteroidId: String) : AsteroidsIntent
 }
 
 // === ViewModel ===
 class AsteroidsViewModel(
     private val spaceApi: SpaceApi,
-    private val favoritesRepo: FavoritesRepository
+    private val favoritesRepo: FavoritesRepository,
+    private val asteroidsRepo: AsteroidsRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AsteroidsState())
@@ -41,51 +46,50 @@ class AsteroidsViewModel(
 
     fun processIntent(intent: AsteroidsIntent) {
         when (intent) {
-            is AsteroidsIntent.Load -> loadAsteroids()
+            is AsteroidsIntent.Load -> loadAsteroids(forceRefresh = false)
+            is AsteroidsIntent.Refresh -> loadAsteroids(forceRefresh = true)
             is AsteroidsIntent.ToggleFavorite -> toggleFavorite(intent.asteroidId)
         }
     }
 
-    private fun loadAsteroids() {
+    private fun loadAsteroids(forceRefresh: Boolean) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
-            try {
-                // ✅ Даты через kotlinx-datetime
-                val now = StdClock.System.now()
-                val ktxInstant = KtxInstant.fromEpochMilliseconds(now.toEpochMilliseconds())
-                val today: LocalDate = ktxInstant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-                val startDate = today.minus(7, DateTimeUnit.DAY)
+            _state.value = _state.value.copy(
+                isLoading = !forceRefresh,
+                isRefreshing = forceRefresh,
+                error = null
+            )
 
-                println("🚀 NEO Request: start=$startDate, end=$today")
+            val result = asteroidsRepo.getAsteroids(forceRefresh = forceRefresh)
 
-                val response = spaceApi.getNearEarthObjects(
-                    startDate = startDate.toString(),
-                    endDate = today.toString()
-                )
+            result.fold(
+                onSuccess = { asteroids ->
+                    // ✅ Загружаем статус избранного
+                    val favoriteIds = asteroids
+                        .filter { favoritesRepo.isFavorite(it.id, "asteroid") }
+                        .map { it.id }
+                        .toSet()
 
-                val allAsteroids = response.nearEarthObjects.values.flatten()
-                println("✅ Found ${allAsteroids.size} asteroids")
+                    // ✅ Проверяем, есть ли интернет (если кэш вернули при ошибке)
+                    val isOffline = result.isFailure || asteroids.isEmpty()
 
-                // ✅ Загружаем статус избранного для всех астероидов
-                val favoriteIds = allAsteroids
-                    .filter { favoritesRepo.isFavorite(it.id, "asteroid") }
-                    .map { it.id }
-                    .toSet()
-
-                _state.value = _state.value.copy(
-                    isLoading = false,
-                    asteroids = allAsteroids,
-                    favoriteIds = favoriteIds
-                )
-            } catch (e: Exception) {
-                println("❌ ERROR: ${e::class.simpleName} - ${e.message}")
-                e.printStackTrace()
-
-                _state.value = _state.value.copy(
-                    isLoading = false,
-                    error = e.message ?: "Unknown error"
-                )
-            }
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        asteroids = asteroids,
+                        favoriteIds = favoriteIds,
+                        isOffline = isOffline && asteroids.isNotEmpty()
+                    )
+                },
+                onFailure = { error ->
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        error = error.message ?: "Unknown error",
+                        isOffline = false
+                    )
+                }
+            )
         }
     }
 

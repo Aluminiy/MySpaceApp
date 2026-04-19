@@ -1,5 +1,6 @@
 package ru.omc.myspaceapp.features.asteroids
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,9 +9,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,30 +27,34 @@ fun AsteroidsScreen(
     viewModel: AsteroidsViewModel = koinInject()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val pullToRefreshState = rememberPullToRefreshState()
 
     LaunchedEffect(Unit) {
         viewModel.processIntent(AsteroidsIntent.Load)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("☄️ Астероиды") })
-        }
-    ) { padding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pullToRefresh(
+                state = pullToRefreshState,
+                isRefreshing = state.isRefreshing,
+                onRefresh = { viewModel.processIntent(AsteroidsIntent.Refresh) }
+            )
+    ) {
         when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+            state.isRefreshing -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
-            state.error != null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+            state.isLoading && !state.isRefreshing -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            state.error != null && state.asteroids.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Ошибка: ${state.error}", color = MaterialTheme.colorScheme.error)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -59,20 +66,13 @@ fun AsteroidsScreen(
             }
             else -> {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     item {
-                        Text(
-                            text = "За неделю найдено: ${state.asteroids.size}",
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        Text("За неделю найдено: ${state.asteroids.size}")
                         Spacer(modifier = Modifier.height(8.dp))
                     }
-
                     items(state.asteroids) { asteroid ->
                         AsteroidCard(
                             asteroid = asteroid,

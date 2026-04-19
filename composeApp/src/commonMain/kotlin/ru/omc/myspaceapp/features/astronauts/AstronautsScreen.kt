@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,20 +27,34 @@ fun AstronautsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    val pullToRefreshState = rememberPullToRefreshState()
+
     LaunchedEffect(Unit) {
         viewModel.processIntent(AstronautsIntent.Load)
     }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("👨‍ Космонавты") }) }
-    ) { padding ->
+    // ✅ Pull-to-Refresh
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pullToRefresh(
+                isRefreshing = state.isRefreshing,
+                onRefresh = { viewModel.processIntent(AstronautsIntent.Refresh) },
+                state = pullToRefreshState
+            )
+    ) {
         when {
-            state.isLoading -> {
+            state.isRefreshing -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
-            state.error != null -> {
+            state.isLoading && !state.isRefreshing -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            state.error != null && state.astronauts.isEmpty() -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Ошибка: ${state.error}", color = MaterialTheme.colorScheme.error)
@@ -53,7 +69,6 @@ fun AstronautsScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

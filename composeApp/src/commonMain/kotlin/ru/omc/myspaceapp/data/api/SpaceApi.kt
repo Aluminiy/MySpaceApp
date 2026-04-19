@@ -12,10 +12,9 @@ import ru.omc.myspaceapp.data.model.AstronautResponseDto
 import ru.omc.myspaceapp.data.model.NearEarthObjectsResponse
 import ru.omc.myspaceapp.utils.Constants
 
-// ✅ Expect-функция для платформенного клиента
+
 expect fun createHttpClient(): HttpClient
 
-// ✅ Общий конфиг для всех платформ
 fun HttpClientConfig<*>.commonConfig() {
     install(ContentNegotiation) {
         json(Json {
