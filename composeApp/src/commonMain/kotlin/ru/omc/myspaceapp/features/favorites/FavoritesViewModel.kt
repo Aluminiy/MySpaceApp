@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import ru.omc.myspaceapp.Favorite
-import ru.omc.myspaceapp.data.repository.FavoritesRepository
+import ru.omc.myspaceapp.data.repository.FavoritesRepositoryImpl
 
 data class FavoritesState(
     val isLoading: Boolean = false,
@@ -20,7 +20,7 @@ sealed interface FavoritesIntent {
 }
 
 class FavoritesViewModel(
-    private val favoritesRepo: FavoritesRepository
+    private val favoritesRepo: FavoritesRepositoryImpl
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(FavoritesState())

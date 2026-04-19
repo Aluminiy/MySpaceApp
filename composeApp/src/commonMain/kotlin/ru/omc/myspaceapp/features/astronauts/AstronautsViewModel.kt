@@ -9,11 +9,9 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.toLocalDateTime
 import ru.omc.myspaceapp.data.api.SpaceApi
 import ru.omc.myspaceapp.data.model.AstronautDto
-import ru.omc.myspaceapp.data.repository.FavoritesRepository
+import ru.omc.myspaceapp.data.repository.FavoritesRepositoryImpl
 import kotlin.time.Clock as StdClock
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.DateTimeUnit
 import ru.omc.myspaceapp.data.repository.AstronautsRepository
 import kotlinx.datetime.Instant as KtxInstant
 
@@ -33,7 +31,7 @@ sealed interface AstronautsIntent {
 
 class AstronautsViewModel(
     private val spaceApi: SpaceApi,
-    private val favoritesRepo: FavoritesRepository,
+    private val favoritesRepo: FavoritesRepositoryImpl,
     private val astronautsRepo: AstronautsRepository
 ) : ViewModel() {
 

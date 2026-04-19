@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.*
 import ru.omc.myspaceapp.data.api.SpaceApi
 import ru.omc.myspaceapp.data.model.AsteroidDto
-import ru.omc.myspaceapp.data.repository.FavoritesRepository
+import ru.omc.myspaceapp.data.repository.FavoritesRepositoryImpl
 import kotlin.time.Clock as StdClock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.LocalDate
@@ -30,7 +30,7 @@ sealed interface AsteroidDetailsIntent {
 
 class AsteroidDetailsViewModel(
     private val spaceApi: SpaceApi,
-    private val favoritesRepo: FavoritesRepository
+    private val favoritesRepo: FavoritesRepositoryImpl
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AsteroidDetailsState())

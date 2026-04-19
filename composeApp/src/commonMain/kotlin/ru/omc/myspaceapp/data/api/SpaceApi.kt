@@ -32,14 +32,14 @@ fun HttpClientConfig<*>.commonConfig() {
     }
 }
 
-class SpaceApi(private val client: HttpClient = createHttpClient()) {
+open class SpaceApi(private val client: HttpClient = createHttpClient()) {
 
-    suspend fun getAstronauts(): AstronautResponseDto {
+    open suspend fun getAstronauts(): AstronautResponseDto {
         return client.get("${Constants.BASE_URL_OPEN_NOTIFY}${Constants.ENDPOINT_ASTRO}")
             .body<AstronautResponseDto>()
     }
 
-    suspend fun getNearEarthObjects(startDate: String, endDate: String): NearEarthObjectsResponse {
+    open suspend fun getNearEarthObjects(startDate: String, endDate: String): NearEarthObjectsResponse {
         return client.get("${Constants.BASE_URL_NEO}/feed") {
             parameter("api_key", Constants.NASA_API_KEY)
             parameter("start_date", startDate)

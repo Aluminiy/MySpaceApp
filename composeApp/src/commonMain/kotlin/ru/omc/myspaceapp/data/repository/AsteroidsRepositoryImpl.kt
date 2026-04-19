@@ -11,7 +11,12 @@ import kotlin.time.Instant
 import kotlin.time.Clock as StdClock
 import kotlinx.datetime.Instant as KtxInstant
 
-class AsteroidsRepository(
+interface AsteroidsRepository {
+    suspend fun getAsteroids(forceRefresh: Boolean = false): Result<List<AsteroidDto>>
+    suspend fun refreshAsteroids(): Result<List<AsteroidDto>>
+}
+
+open class AsteroidsRepositoryImpl(
     private val spaceApi: SpaceApi,
     private val database: AppDatabase
 ) {
