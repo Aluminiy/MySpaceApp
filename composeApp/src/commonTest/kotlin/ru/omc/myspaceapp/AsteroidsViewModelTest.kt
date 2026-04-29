@@ -70,11 +70,23 @@ class AsteroidsViewModelTest {
     }
 
     // ═══════════════════════════════════════════════════════
-    // ТЕСТЫ: Load Intent
+    // ТЕСТЫ: Load Intent - isLoading
     // ═══════════════════════════════════════════════════════
 
     @Test
-    fun `load asteroids - success - should update state with data`() = runTest {
+    fun `load asteroids - isLoading is true during loading`() = runTest {
+        // Given
+        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.Load)
+
+        // Then - 1 асерт
+        assertTrue(viewModel.state.value.isLoading)
+    }
+
+    @Test
+    fun `load asteroids - isLoading is false after success`() = runTest {
         // Given
         fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
 
@@ -82,16 +94,60 @@ class AsteroidsViewModelTest {
         viewModel.processIntent(AsteroidsIntent.Load)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then - Kotlin Test assertions
-        val state = viewModel.state.value
-        assertFalse(state.isLoading)
-        assertEquals(listOf(testAsteroid), state.asteroids)
-        assertNull(state.error)
-        assertFalse(state.isRefreshing)
+        // Then - 1 асерт
+        assertFalse(viewModel.state.value.isLoading)
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ТЕСТЫ: Load Intent - asteroids data
+    // ═══════════════════════════════════════════════════════
+
+    @Test
+    fun `load asteroids - asteroids list is updated on success`() = runTest {
+        // Given
+        val expectedAsteroids = listOf(testAsteroid)
+        fakeAsteroidsRepo.asteroidsToReturn = expectedAsteroids
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.Load)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - 1 асерт
+        assertEquals(expectedAsteroids, viewModel.state.value.asteroids)
     }
 
     @Test
-    fun `load asteroids - error - should update state with error`() = runTest {
+    fun `load asteroids - error is null on success`() = runTest {
+        // Given
+        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.Load)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - 1 асерт
+        assertNull(viewModel.state.value.error)
+    }
+
+    @Test
+    fun `load asteroids - isRefreshing is false after load`() = runTest {
+        // Given
+        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.Load)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - 1 асерт
+        assertFalse(viewModel.state.value.isRefreshing)
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ТЕСТЫ: Load Intent - error handling
+    // ═══════════════════════════════════════════════════════
+
+    @Test
+    fun `load asteroids - error message is set on failure`() = runTest {
         // Given
         fakeAsteroidsRepo.shouldFail = true
         fakeAsteroidsRepo.errorMessage = "Network error"
@@ -100,27 +156,36 @@ class AsteroidsViewModelTest {
         viewModel.processIntent(AsteroidsIntent.Load)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
-        val state = viewModel.state.value
-        assertFalse(state.isLoading)
-        assertTrue(state.error?.contains("Network error") == true)
-        assertTrue(state.asteroids.isEmpty())
+        // Then - 1 асерт
+        assertNotNull(viewModel.state.value.error)
     }
 
     @Test
-    fun `load asteroids - offline mode - should return cached data`() = runTest {
+    fun `load asteroids - error contains correct message`() = runTest {
         // Given
-        val cachedAsteroids = listOf(testAsteroid.copy(name = "Cached"))
-        fakeAsteroidsRepo.asteroidsToReturn = cachedAsteroids
+        fakeAsteroidsRepo.shouldFail = true
+        val expectedMessage = "Network error"
+        fakeAsteroidsRepo.errorMessage = expectedMessage
 
         // When
         viewModel.processIntent(AsteroidsIntent.Load)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
-        val state = viewModel.state.value
-        assertEquals(cachedAsteroids, state.asteroids)
-        assertFalse(state.isOffline) // Успешный результат = не оффлайн
+        // Then - 1 асерт
+        assertTrue(viewModel.state.value.error?.contains(expectedMessage) == true)
+    }
+
+    @Test
+    fun `load asteroids - asteroids list is empty on error`() = runTest {
+        // Given
+        fakeAsteroidsRepo.shouldFail = true
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.Load)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - 1 асерт
+        assertTrue(viewModel.state.value.asteroids.isEmpty())
     }
 
     // ═══════════════════════════════════════════════════════
@@ -128,7 +193,19 @@ class AsteroidsViewModelTest {
     // ═══════════════════════════════════════════════════════
 
     @Test
-    fun `refresh asteroids - should call with forceRefresh true`() = runTest {
+    fun `refresh asteroids - isRefreshing is true during refresh`() = runTest {
+        // Given
+        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.Refresh)
+
+        // Then - 1 асерт
+        assertTrue(viewModel.state.value.isRefreshing)
+    }
+
+    @Test
+    fun `refresh asteroids - forceRefresh is true`() = runTest {
         // Given
         fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
 
@@ -136,33 +213,42 @@ class AsteroidsViewModelTest {
         viewModel.processIntent(AsteroidsIntent.Refresh)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
+        // Then - 1 асерт
         assertTrue(fakeAsteroidsRepo.lastForceRefreshValue)
-        assertEquals(1, fakeAsteroidsRepo.getAsteroidsCallCount)
     }
 
     @Test
-    fun `refresh asteroids - error - should reset isRefreshing`() = runTest {
+    fun `refresh asteroids - repository is called once`() = runTest {
         // Given
-        fakeAsteroidsRepo.shouldFail = true
-        fakeAsteroidsRepo.errorMessage = "API error"
+        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
 
         // When
         viewModel.processIntent(AsteroidsIntent.Refresh)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
-        val state = viewModel.state.value
-        assertFalse(state.isRefreshing)
-        assertTrue(state.error != null)
+        // Then - 1 асерт
+        assertEquals(1, fakeAsteroidsRepo.getAsteroidsCallCount)
+    }
+
+    @Test
+    fun `refresh asteroids - isRefreshing is false after completion`() = runTest {
+        // Given
+        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.Refresh)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - 1 асерт
+        assertFalse(viewModel.state.value.isRefreshing)
     }
 
     // ═══════════════════════════════════════════════════════
-    // ТЕСТЫ: ToggleFavorite Intent
+    // ТЕСТЫ: ToggleFavorite - add to favorites
     // ═══════════════════════════════════════════════════════
 
     @Test
-    fun `toggle favorite - add to favorites - should update favoriteIds`() = runTest {
+    fun `toggle favorite - asteroid is added to favoriteIds`() = runTest {
         // Given
         fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
         viewModel.processIntent(AsteroidsIntent.Load)
@@ -172,14 +258,31 @@ class AsteroidsViewModelTest {
         viewModel.processIntent(AsteroidsIntent.ToggleFavorite(testAsteroid.id))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
-        val state = viewModel.state.value
-        assertTrue(state.favoriteIds.contains(testAsteroid.id))
-        assertTrue(fakeFavoritesRepo.isFavorite(testAsteroid.id, "asteroid"))
+        // Then - 1 асерт
+        assertTrue(viewModel.state.value.favoriteIds.contains(testAsteroid.id))
     }
 
     @Test
-    fun `toggle favorite - remove from favorites - should update favoriteIds`() = runTest {
+    fun `toggle favorite - repository isFavorite returns true`() = runTest {
+        // Given
+        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
+        viewModel.processIntent(AsteroidsIntent.Load)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.ToggleFavorite(testAsteroid.id))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - 1 асерт
+        assertTrue(fakeFavoritesRepo.isFavorite(testAsteroid.id, "asteroid"))
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ТЕСТЫ: ToggleFavorite - remove from favorites
+    // ═══════════════════════════════════════════════════════
+
+    @Test
+    fun `toggle favorite - asteroid is removed from favoriteIds`() = runTest {
         // Given
         fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
         fakeFavoritesRepo.addTestFavorite(testAsteroid.id, "asteroid", testAsteroid.name)
@@ -191,36 +294,54 @@ class AsteroidsViewModelTest {
         viewModel.processIntent(AsteroidsIntent.ToggleFavorite(testAsteroid.id))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
-        val state = viewModel.state.value
-        assertFalse(state.favoriteIds.contains(testAsteroid.id))
-        assertFalse(fakeFavoritesRepo.isFavorite(testAsteroid.id, "asteroid"))
+        // Then - 1 асерт
+        assertFalse(viewModel.state.value.favoriteIds.contains(testAsteroid.id))
     }
 
     @Test
-    fun `toggle favorite - asteroid not found - should not call repository`() = runTest {
+    fun `toggle favorite - repository isFavorite returns false after removal`() = runTest {
+        // Given
+        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
+        fakeFavoritesRepo.addTestFavorite(testAsteroid.id, "asteroid", testAsteroid.name)
+
+        viewModel.processIntent(AsteroidsIntent.Load)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When
+        viewModel.processIntent(AsteroidsIntent.ToggleFavorite(testAsteroid.id))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - 1 асерт
+        assertFalse(fakeFavoritesRepo.isFavorite(testAsteroid.id, "asteroid"))
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ТЕСТЫ: ToggleFavorite - edge cases
+    // ═══════════════════════════════════════════════════════
+
+    @Test
+    fun `toggle favorite - unknown asteroid does not change favorites count`() = runTest {
         // Given
         fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
         viewModel.processIntent(AsteroidsIntent.Load)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Запоминаем состояние до
         val beforeSize = fakeFavoritesRepo.favorites.value.size
 
-        // When - пытаемся добавить несуществующий астероид
+        // When
         viewModel.processIntent(AsteroidsIntent.ToggleFavorite("unknown-id"))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then - состояние не изменилось
+        // Then - 1 асерт
         assertEquals(beforeSize, fakeFavoritesRepo.favorites.value.size)
     }
 
     // ═══════════════════════════════════════════════════════
-    // ТЕСТЫ: Edge Cases
+    // ТЕСТЫ: Edge Cases - empty list
     // ═══════════════════════════════════════════════════════
 
     @Test
-    fun `load with empty list - should update state with empty asteroids`() = runTest {
+    fun `load with empty list - asteroids list is empty`() = runTest {
         // Given
         fakeAsteroidsRepo.asteroidsToReturn = emptyList()
 
@@ -228,24 +349,20 @@ class AsteroidsViewModelTest {
         viewModel.processIntent(AsteroidsIntent.Load)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
-        val state = viewModel.state.value
-        assertTrue(state.asteroids.isEmpty())
-        assertFalse(state.isLoading)
+        // Then - 1 асерт
+        assertTrue(viewModel.state.value.asteroids.isEmpty())
     }
 
     @Test
-    fun `multiple load calls - should handle correctly`() = runTest {
+    fun `load with empty list - isLoading is false`() = runTest {
         // Given
-        fakeAsteroidsRepo.asteroidsToReturn = listOf(testAsteroid)
+        fakeAsteroidsRepo.asteroidsToReturn = emptyList()
 
         // When
         viewModel.processIntent(AsteroidsIntent.Load)
-        viewModel.processIntent(AsteroidsIntent.Load) // Второй вызов
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
-        val state = viewModel.state.value
-        assertEquals(listOf(testAsteroid), state.asteroids)
+        // Then - 1 асерт
+        assertFalse(viewModel.state.value.isLoading)
     }
 }

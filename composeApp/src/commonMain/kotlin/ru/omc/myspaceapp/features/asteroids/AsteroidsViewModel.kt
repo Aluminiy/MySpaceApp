@@ -32,16 +32,16 @@ sealed interface AsteroidsIntent {
 }
 
 // === ViewModel ===
-class AsteroidsViewModel(
+open class AsteroidsViewModel(
     private val spaceApi: SpaceApi,
     private val favoritesRepo: FavoritesRepository,
     private val asteroidsRepo: AsteroidsRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(AsteroidsState())
+    val _state = MutableStateFlow(AsteroidsState())
     val state: StateFlow<AsteroidsState> = _state.asStateFlow()
 
-    fun processIntent(intent: AsteroidsIntent) {
+    open fun processIntent(intent: AsteroidsIntent) {
         when (intent) {
             is AsteroidsIntent.Load -> loadAsteroids(forceRefresh = false)
             is AsteroidsIntent.Refresh -> loadAsteroids(forceRefresh = true)

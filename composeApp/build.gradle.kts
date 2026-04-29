@@ -65,6 +65,11 @@ kotlin {
             implementation(libs.turbine)
             implementation(libs.truth)
             implementation(libs.kotlinx.coroutines.test)
+
+            implementation(kotlin("test"))
+
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
         }
 
         iosMain.dependencies {
